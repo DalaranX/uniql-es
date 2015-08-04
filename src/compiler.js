@@ -1,6 +1,7 @@
 'use strict';
 
 var extend = require( 'extend' );
+var _      = require('underscore');
 
 module.exports = compile;
 
@@ -31,7 +32,7 @@ var generators = {
     },
     "STRING": _identity,
     "SYMBOL": _identity,
-    
+
     "-": function( node ) {
         return -_identity( node );
     },
@@ -58,7 +59,7 @@ var generators = {
         };
     },
     "!": function( node ) {
-        return { bool: { must_not: [ _processNode( node.arguments[ 0 ] ) ] } }; 
+        return { bool: { must_not: [ _processNode( node.arguments[ 0 ] ) ] } };
     },
     "==": function( node ) {
         var comparison = _extractComparison( node );
@@ -79,6 +80,40 @@ var generators = {
         };
         _nequals.bool.must_not.term[ _processNode( comparison.symbol ) ] = _processNode( comparison.value );
         return _nequals;
+    },
+    "LIKE": function( node ) {
+        var comparison = _extractComparison( node );
+        var symbol = _processNode(comparison.symbol);
+        var value = _processNode(comparison.value);
+        value = value.split(' ');
+        var s = 0;
+        var step = 1000;
+        var len = value.length
+        var q = {
+          fquery: {
+            _cache: true,
+            query: {
+              bool: {
+                should: []
+              }
+            }
+          }
+        };
+        while (true) {
+          var t = s + Math.min(len - s, step);
+          var tmp = value.slice(s, t);
+          var term = {
+            query_string: {
+              fields: [symbol],
+              query: _.map(tmp, function(v) {return "\"" + v.trim() + "\"";}).join(" OR ")
+            }
+          };
+          q.fquery.query.bool.should.push(term);
+          s = s + Math.min(len - s, step)
+          if (s >= len)
+            break
+        }
+        return q
     },
     "MATCH": function( node ) {
         var comparison = _extractComparison( node );
@@ -101,7 +136,7 @@ var generators = {
             lt: _processNode( comparison.value )
         };
         return _lt;
-    },    
+    },
     "<=": function( node ) {
         var comparison = _extractComparison( node );
         var _lte = {
@@ -111,7 +146,7 @@ var generators = {
             lte: _processNode( comparison.value )
         };
         return _lte;
-    },    
+    },
     ">": function( node ) {
         var comparison = _extractComparison( node );
         var _gt = {
@@ -121,7 +156,7 @@ var generators = {
             gt: _processNode( comparison.value )
         };
         return _gt;
-    },    
+    },
     ">=": function( node ) {
         var comparison = _extractComparison( node );
         var _gte = {
@@ -172,7 +207,7 @@ function _processNode( node ) {
     if ( !( node.type in generators ) ) {
         throw new Error( 'invalid node type' );
     }
-    
+
     return generators[ node.type ]( node );
 }
 

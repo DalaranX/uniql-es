@@ -2,10 +2,7 @@
   "name": "uniql-es",
   "version": "0.1.0",
   "description": "Produces ElasticSearch queries from UniQL ASTs.",
-  "main": "src/compiler.js",
-  "scripts": {
-    "test": "mocha tests/"
-  },
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/honeinc/uniql-es.git"
@@ -30,10 +27,9 @@
   "bugs": {
     "url": "https://github.com/honeinc/uniql-es/issues"
   },
-  "devDependencies": {
-    "mocha": "~2.0.1"
-  },
   "dependencies": {
-    "extend": "^2.0.0"
+    "extend": "^2.0.1",
+    "jison": "^0.4.15",
+    "underscore": "^1.8.3"
   }
 }
