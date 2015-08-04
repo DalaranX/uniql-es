@@ -8,8 +8,8 @@ support `query_string`, use `like` to replace
 ## Example
 
 ```javascript
-var parse = require( 'uniql' );
-var esCompile = require( 'uniql-es' );
+var parse     = require( '../src/index' ).parse;
+var esCompile = require( '../src/index').compile;
 
 var ast = parse( '( height <= 20 or ( favorites.color == "green" and height != 25 and text like "google" ) ) and firstname ~= "o.+"' );
 var esQuery = esCompile( ast );
