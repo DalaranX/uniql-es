@@ -64,9 +64,14 @@ var generators = {
     "==": function( node ) {
         var comparison = _extractComparison( node );
         var _equals = {
-            term: {}
+            terms: {}
         };
-        _equals.term[ _processNode( comparison.symbol ) ] = _processNode( comparison.value );
+        var value = _processNode(comparison.value);
+        if (_.isString(value))
+          value = value.split(',')
+        else
+          value = [value]
+        _equals.terms[ _processNode( comparison.symbol ) ] = value;
         return _equals;
     },
     "!=": function( node ) {
@@ -74,18 +79,19 @@ var generators = {
         var _nequals = {
             bool: {
                 must_not: {
-                    term: {}
+                    terms: {}
                 }
             }
         };
-        _nequals.bool.must_not.term[ _processNode( comparison.symbol ) ] = _processNode( comparison.value );
+        var value = _processNode(comparison.value).split(',');
+        _nequals.bool.must_not.terms[ _processNode( comparison.symbol ) ] = value;
         return _nequals;
     },
     "LIKE": function( node ) {
         var comparison = _extractComparison( node );
         var symbol = _processNode(comparison.symbol);
         var value = _processNode(comparison.value);
-        value = value.split(' ');
+        value = value.split(',');
         var s = 0;
         var step = 1000;
         var len = value.length
@@ -105,7 +111,12 @@ var generators = {
           var term = {
             query_string: {
               fields: [symbol],
-              query: _.map(tmp, function(v) {return "\"" + v.trim() + "\"";}).join(" OR ")
+              query: _.map(tmp, function(v) {
+                k = v.trim().split(' ');
+                return "(" + _.map(k, function(o) {
+                  return "\"" + o.trim().split(' ') + "\"";
+                }).join(' AND ') + ")"
+              }).join(" OR ")
             }
           };
           q.fquery.query.bool.should.push(term);
@@ -113,6 +124,28 @@ var generators = {
           if (s >= len)
             break
         }
+        return q
+    },
+    "NOTLIKE": function( node ) {
+        var comparison = _extractComparison( node );
+        var symbol = _processNode(comparison.symbol);
+        var value = _processNode(comparison.value);
+        value = value.split(',');
+        var q = {
+          bool: {
+            must_not: {
+              fquery: {
+                _cache: true,
+                query: {
+                  query_string: {
+                    fields: [symbol],
+                    query: _.map(value, function(v) {return "\"" + v.trim() + "\"";}).join(" OR ")
+                  }
+                }
+              }
+            }
+          }
+        };
         return q
     },
     "MATCH": function( node ) {
