@@ -1,5 +1,5 @@
 {
-  "name": "uniql-es",
+  "name": "es-dsl",
   "version": "0.1.0",
   "description": "Produces ElasticSearch queries from UniQL ASTs.",
   "main": "src/index.js",
