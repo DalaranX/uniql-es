@@ -3,7 +3,9 @@ UniQL-ES
 
 This generates ElasticSearch queries based on [UniQL](https://github.com/honeinc/uniql) ASTs.
 
-support `query_string`, use `like` to replace
+支持`query_string`, 用`like` and `not_like` 标识
+
+支持多个词查询，比如 color 在 [red, green], 使用 color == "red,green", 其实正常应该用`in`来标示
 
 ## Example
 
@@ -31,7 +33,7 @@ Resulting query:
                   { must:
                     [ { bool:
                       { must:
-                        [ { term: { 'favorites.color': 'green' } },
+                        [ { terms: { 'favorites.color': ['green'] } },
                         { bool: { must_not: { term: { height: 25 } } } } ] } },
                     { fquery:
                       { _cache: true,
