@@ -83,7 +83,11 @@ var generators = {
                 }
             }
         };
-        var value = _processNode(comparison.value).split(',');
+        var value = _processNode(comparison.value);
+        if (_.isString(value))
+          value = value.split(',')
+        else
+          value = [value]
         _nequals.bool.must_not.terms[ _processNode( comparison.symbol ) ] = value;
         return _nequals;
     },
