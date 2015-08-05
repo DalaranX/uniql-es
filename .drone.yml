@@ -1,0 +1,4 @@
+image: node:0.12
+script:
+  - echo "Hello Node"
+  - npm install
