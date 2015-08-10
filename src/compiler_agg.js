@@ -5,7 +5,7 @@ var _      = require('underscore');
 var parse  = require( './index' ).parse;
 var esCompile = require( './index').compile;
 
-module.exports = compile;
+module.exports = compile_agg;
 
 function _identity( node ) {
     return node.arguments[ 0 ];
@@ -118,7 +118,7 @@ function _rec(node, agg) {
     return agg;
 }
 
-function compile( tree ) {
+function compile_agg( tree ) {
     var arr = _processNode( tree );
     var agg = {};
     _rec(arr, agg)
