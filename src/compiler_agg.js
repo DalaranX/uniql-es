@@ -2,125 +2,41 @@
 
 var extend = require( 'extend' );
 var _      = require('underscore');
-var parse  = require( './index' ).parse;
-var esCompile = require( './index').compile;
 
 module.exports = compile_agg;
 
-function _identity( node ) {
-    return node.arguments[ 0 ];
-}
-
-var generators = {
-    "STRING": _identity,
-    "SYMBOL": _identity,
-    "AGG": function(node) {
-      var comparison = _extractComparison( node );
-      var symbol = _processNode(comparison.symbol)
-      var _equals = {
-      };
-      _equals[symbol] = _processNode( comparison.value );
-      return _equals;
-    },
-    "side": function(node) {
-        var _and = {should: []};
-        node.arguments.forEach( function( _node ) {
-           _and.should.push( _processNode( _node ) );
-        } );
-        return _and;
-    },
-    "dive": function(node) {
-      var _or =  {must: []};
-      node.arguments.forEach( function( _node ) {
-        _or.must.push( _processNode( _node ) );
-      } );
-      return _or;
-    },
-    "EXPRESSION": function( node ) {
-        var _expression = {};
-        node.arguments.forEach( function( _node ) {
-            extend( _expression, _processNode( _node ) );
-        } );
-        return _expression;
-    }
-};
-
-function _extractComparison( node ) {
-    var symbol = null;
-    var value = null;
-    node.arguments.forEach( function( _node ) {
-        if ( _node.type === 'SYMBOL' ) {
-            if ( symbol ) {
-                throw new Error( 'ELASTICSEARCH: You can only specify one symbol in a comparison.' );
-            }
-            symbol = _node;
-        } else {
-            if ( value ) {
-                throw new Error( 'ELASTICSEARCH: You can only specify one value in a comparison.' );
-            }
-            value = _node;
-        }
-    } );
-
-    if ( !( symbol && value ) ) {
-        throw new Error( 'ELASTICSEARCH: Invalid comparison, could not find both symbol and value.' );
-    }
-
-    return {
-        symbol: symbol,
-        value: value
-    };
-}
-
-function _processNode( node ) {
-    if ( !( node.type in generators ) ) {
-        throw new Error( 'invalid node type' );
-    }
-
-    return generators[ node.type ]( node );
-}
-
-function _parse(type, s) {
-  if (type == 'filter') {
-  } else {
-    var o = {};
-    _.each(s.split(','), function(t) {
-      var tmp = t.split('==');
-      o[tmp[0]] = tmp[1];
-    })
-    return o;
-  }
-  return {}
-}
-
-function _rec(node, agg) {
-    console.log(node, agg);
-    if (_.isObject(node)) {
-      if(node.should) {
-        _.each(node.should, function(o) {
-          _rec(o, agg);
-        })
-      }
-      else if(node.must) {
-        _.each(node.must, function(o) {
-          agg['aggs'] = {};
-          agg = agg['aggs'];
-          _rec(o, agg);
-        })
-      } else {
-        var k = _.keys(node)[0];
-        var symbol = k.split('.')[0];
-        var type = k.split('.')[1];
-        agg[symbol] = {};
-        agg[symbol][type] = _parse(type, node[k]);
-      }
-    }
-    return agg;
+function _parse(s, agg) {
+  var p = s.split('@')[0];
+  var n = s.split('@')[1];
+  var name = p.split('.')[0];
+  var type = p.split('.')[1];
+  agg[name] = {};
+  agg[name][type] = {};
+  _.each(n.split(','), function(t) {
+    var tmp = t.split('==');
+    agg[name][type][tmp[0]] = tmp[1];
+  })
+  return name
 }
 
 function compile_agg( tree ) {
-    var arr = _processNode( tree );
+    var arr = tree.trim().split(' ');
     var agg = {};
-    _rec(arr, agg)
-    return {aggs: agg};
+    var s = agg;
+    var len = arr.length
+    var i = 0
+    while (i < len) {
+      var o = arr[i];
+      if (!o.length) return;
+      if (arr[i] != 'dive' && arr[i] != 'side')
+        var name = _parse(o, agg);
+        if (i-1>=0 && arr[i] == 'dive') {
+          agg[name]['aggs'] = {}
+          agg = agg[name]['aggs']
+        }
+      i++;
+    }
+    return {aggs: s};
 }
+
+//compile_agg('v3.value@field==v side total_user.cardinality@precision_thresold==4000,field==k.openid dive total.term@a==b dive t.terms@b==c')
