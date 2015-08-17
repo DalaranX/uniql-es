@@ -14,7 +14,10 @@ function _parse(s, agg) {
   agg[name][type] = {};
   _.each(n.split(','), function(t) {
     var tmp = t.split('==');
-    agg[name][type][tmp[0]] = tmp[1];
+    var value = tmp[1];
+    if (tmp[0] == 'size' || tmp[0] == 'precision_thresold')
+      value = parseInt(tmp[1])
+    agg[name][type][tmp[0]] = value;
   })
   return name
 }
