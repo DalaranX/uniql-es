@@ -1,6 +1,6 @@
 {
   "name": "es-dsl",
-  "version": "0.2.1",
+  "version": "0.2.4",
   "description": "Produces ElasticSearch queries from UniQL ASTs.",
   "main": "src/index.js",
   "repository": {
