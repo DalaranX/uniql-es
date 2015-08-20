@@ -2,6 +2,7 @@
 
 var extend = require( 'extend' );
 var _      = require('underscore');
+var parse  = require('./parser');
 
 module.exports = compile;
 
@@ -73,6 +74,18 @@ var generators = {
           value = [value]
         _equals.terms[ _processNode( comparison.symbol ) ] = value;
         return _equals;
+    },
+    "NESTED": function( node ) {
+        var comparison = _extractComparison( node );
+        var node = _processNode(comparison.symbol);
+        var value = _processNode(comparison.value).replace(/'/g, '"');
+        var ast = parse(value);
+        var esq = _processNode(ast);
+        var _nested = {
+          path: node,
+          query: esq
+        };
+        return {nested: _nested};
     },
     "!=": function( node ) {
         var comparison = _extractComparison( node );
