@@ -13,7 +13,7 @@ This generates ElasticSearch queries based on [UniQL](https://github.com/honeinc
 var parse     = require( '../src/index' ).parse;
 var esCompile = require( '../src/index').compile;
 
-var ast = parse( '( height <= 20 or ( favorites.color == "green" and height != 25 and text like "google" ) ) and firstname ~= "o.+"' );
+var ast = parse( '( height <= 20 or ( favorites.color == "green" and height != 25 and text like "google" ) ) and (firstname ~= "o.+" or text like "baidu") and distr_pan nested "distr_pan.k == \'奔驰\' and distr_pan.v >= 0"' );
 var esQuery = esCompile( ast );
 console.log( util.inspect( esQuery, { depth: null } ) );
 ```
@@ -27,19 +27,32 @@ Resulting query:
       [ { bool:
         { must:
           [ { bool:
-            { should:
-              [ { range: { height: { lte: 20 } } },
-                { bool:
-                  { must:
-                    [ { bool:
+            { must:
+              [ { bool:
+                { should:
+                  [ { range: { height: { lte: 20 } } },
+                    { bool:
                       { must:
-                        [ { terms: { 'favorites.color': ['green'] } },
-                        { bool: { must_not: { term: { height: 25 } } } } ] } },
+                        [ { bool:
+                          { must:
+                            [ { terms: { 'favorites.color': [ 'green' ] } },
+                            { bool: { must_not: { terms: { height: [ 25 ] } } } } ] } },
+                        { fquery:
+                          { _cache: true,
+query: { bool: { should: [ { query_string: { fields: [ 'text' ], query: '("google")' } } ] } } } } ] } } ] } },
+                { bool:
+                  { should:
+                    [ { bool: { must: { regexp: { firstname: 'o.+' } } } },
                     { fquery:
                       { _cache: true,
-query: { bool: { should: [ { query_string: { fields: [ 'text' ], query: '"google"' } } ] } } } } ] } } ] } },
-            { bool: { must: { regexp: { firstname: 'o.+' } } } } ] } } ] } } }
-
+query: { bool: { should: [ { query_string: { fields: [ 'text' ], query: '("baidu")' } } ] } } } } ] } } ] } },
+            { nested:
+              { path: 'distr_pan',
+query:
+                { bool:
+                  { must:
+                    [ { terms: { 'distr_pan.k': [ '奔驰' ] } },
+                    { range: { 'distr_pan.v': { gte: 0 } } } ] } } } } ] } } ] } } }
 ```
 
 ## License
