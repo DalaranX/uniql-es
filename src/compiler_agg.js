@@ -20,7 +20,7 @@ function _parse(s, agg) {
   } else {
     _.each(n.split(','), function(t) {
       var tmp = t.split('==');
-      var value = tmp[1];
+      var value = tmp[1].replace(/(^\s*)|(\s*$)/g, "");
       if (tmp[0] == 'size' || tmp[0] == 'precision_thresold')
         value = parseInt(tmp[1])
       agg[name][type][tmp[0]] = value;
