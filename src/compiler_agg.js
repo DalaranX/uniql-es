@@ -2,41 +2,53 @@
 
 var extend = require( 'extend' );
 var _      = require('underscore');
+var parse  = require('./parser');
+var compile = require('./compiler');
 
 module.exports = compile_agg;
 
 function _parse(s, agg) {
   var p = s.split('@')[0];
   var n = s.split('@')[1];
-  var name = p.split('.')[0];
-  var type = p.split('.')[1];
+  var name = p.split('.')[0].trim();
+  var type = p.split('.')[1].trim();
   agg[name] = {};
   agg[name][type] = {};
-  _.each(n.split(','), function(t) {
-    var tmp = t.split('==');
-    var value = tmp[1];
-    if (tmp[0] == 'size' || tmp[0] == 'precision_thresold')
-      value = parseInt(tmp[1])
-    agg[name][type][tmp[0]] = value;
-  })
+  if (type == 'filter') {
+    var esq = compile(parse(n));
+    agg[name][type] = esq.query.filtered.filter[0];
+  } else {
+    _.each(n.split(','), function(t) {
+      var tmp = t.split('==');
+      var value = tmp[1];
+      if (tmp[0] == 'size' || tmp[0] == 'precision_thresold')
+        value = parseInt(tmp[1])
+      agg[name][type][tmp[0]] = value;
+    })
+  }
   return name
 }
 
 function compile_agg( tree ) {
-    var arr = tree.trim().split(' ');
+    var arr = tree.trim().split(/side|dive/g);
+    var op = [];
+    _.each(tree.trim().split(' '), function(o) {
+      if (o == 'side' || o == 'dive') op.push(o);
+    });
     var agg = {};
     var s = agg;
-    var len = arr.length
-    var i = 0
+    var len = arr.length;
+    var i = 0, j = 0;
+    var name;
     while (i < len) {
       var o = arr[i];
       if (!o.length) return;
-      if (arr[i] != 'dive' && arr[i] != 'side')
-        var name = _parse(o, agg);
-        if (i-1>=0 && arr[i] == 'dive') {
+      if (i > 0 && op[j] == 'dive') {
           agg[name]['aggs'] = {}
           agg = agg[name]['aggs']
-        }
+      }
+      name = _parse(o, agg);
+      if (i > 0) j++;
       i++;
     }
     return {aggs: s};
