@@ -21,7 +21,8 @@ function _parse(s, agg) {
     _.each(n.split(','), function(t) {
       var tmp = t.split('==');
       var value = tmp[1].replace(/(^\s*)|(\s*$)/g, "");
-      if (tmp[0] == 'size' || tmp[0] == 'precision_thresold')
+      if (tmp[0] == 'size' || tmp[0] == 'precision_thresold'
+         || tmp[0] == 'min_doc_count')
         value = parseInt(tmp[1])
       agg[name][type][tmp[0]] = value;
     })
