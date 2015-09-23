@@ -177,6 +177,16 @@ var generators = {
         _match.bool.must.regexp[ _processNode( comparison.symbol ) ] = _processNode( comparison.value );
         return _match;
     },
+    "PREFIX": function(node) {
+        var comparison = _extractComparison( node );
+        var _prefix = {
+          prefix: {
+          }
+        };
+        _prefix.prefix[ _processNode( comparison.symbol ) ] = _processNode( comparison.value );
+        return _prefix;
+
+    },
     "<": function( node ) {
         var comparison = _extractComparison( node );
         var _lt = {
