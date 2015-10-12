@@ -23,7 +23,21 @@ function _parse(s, agg) {
       var value = tmp[1].replace(/(^\s*)|(\s*$)/g, "");
       if (tmp[0] == 'size' || tmp[0] == 'precision_thresold'
          || tmp[0] == 'min_doc_count')
-        value = parseInt(tmp[1])
+        value = parseInt(tmp[1]);
+      else if (tmp[0] == 'ranges') {
+        var r = value.split('$');
+        var range = [];
+        _.each(r, function(item) {
+          var temp = {};
+          _.each(item.split('~'), function(o) {
+            if (o[0] == 'k') temp.key = o.slice(1);
+            if (o[0] == 'f') temp.from = parseFloat(o.slice(1));
+            if (o[0] == 't') temp.to = parseFloat(o.slice(1));
+          })
+          range.push(temp);
+        })
+        value = range;
+      }
       agg[name][type][tmp[0]] = value;
     })
   }
