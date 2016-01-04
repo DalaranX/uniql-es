@@ -143,6 +143,24 @@ var generators = {
         }
         return q
     },
+    "LIKEEQ": function( node ) {
+        var comparison = _extractComparison( node );
+        var symbol = _processNode(comparison.symbol);
+        var value = _processNode(comparison.value);
+        value = value.split(',');
+        var q = {
+          fquery: {
+            _cache: true,
+            query: {
+              query_string: {
+                fields: [symbol],
+                query: _.map(value, function(v) {return "\"" + v.trim() + "\"";}).join(" OR ")
+              }
+            }
+          }
+        };
+        return q
+    },
     "NOTLIKE": function( node ) {
         var comparison = _extractComparison( node );
         var symbol = _processNode(comparison.symbol);
